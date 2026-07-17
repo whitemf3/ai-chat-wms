@@ -1,7 +1,6 @@
 {
   "name": "ai-chat-admin",
   "version": "1.0.0",
-  "description": "AI Chat 后台管理系统",
   "private": true,
   "scripts": {
     "dev": "nuxt dev --port 3001",
