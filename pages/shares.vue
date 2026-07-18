@@ -64,36 +64,38 @@
                     </svg>
                     访问
                   </button>
-                  <template v-if="share.status === 'active'">
-                    <button class="action-btn extend" @click="showExtendModal(share)" title="延长有效期">
+                  <template v-if="isSuperAdmin">
+                    <template v-if="share.status === 'active'">
+                      <button class="action-btn extend" @click="showExtendModal(share)" title="延长有效期">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        延长
+                      </button>
+                      <button class="action-btn expire" @click="expireShare(share)" title="使失效">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="15" y1="9" x2="9" y2="15"></line>
+                          <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        失效
+                      </button>
+                    </template>
+                    <button v-else class="action-btn activate" @click="showActivateModal(share)" title="重新生效">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
+                        <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
-                      延长
+                      生效
                     </button>
-                    <button class="action-btn expire" @click="expireShare(share)" title="使失效">
+                    <button class="action-btn delete" @click="deleteShare(share)" title="删除">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="15" y1="9" x2="9" y2="15"></line>
-                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                       </svg>
-                      失效
+                      删除
                     </button>
                   </template>
-                  <button v-else class="action-btn activate" @click="showActivateModal(share)" title="重新生效">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    生效
-                  </button>
-                  <button class="action-btn delete" @click="deleteShare(share)" title="删除">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="3 6 5 6 21 6"></polyline>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                    删除
-                  </button>
                 </div>
               </td>
             </tr>
@@ -202,6 +204,7 @@
       v-model:visible="dialog.confirmVisible.value"
       :type="dialog.confirmType.value"
       :message="dialog.confirmMessage.value"
+      :bindings="dialog.confirmBindings.value"
       @confirm="dialog.handleConfirm"
       @cancel="dialog.handleCancel"
     />
@@ -212,6 +215,7 @@
       :type="dialog.alertType.value"
       :message="dialog.alertMessage.value"
       :duration="dialog.alertDuration.value"
+      :alert-key="dialog.alertKey.value"
     />
   </div>
 </template>
@@ -225,7 +229,7 @@ definePageMeta({
   middleware: ['admin']
 });
 
-const { fetchAPI } = useAdminAuth();
+const { fetchAPI, isSuperAdmin } = useAdminAuth();
 const dialog = useDialog();
 
 const shares = ref([]);

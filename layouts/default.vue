@@ -18,6 +18,10 @@
           <span class="nav-icon">🤖</span>
           <span class="nav-text">模型配置</span>
         </NuxtLink>
+        <NuxtLink to="/workflows" class="nav-item" :class="{ active: $route.path === '/workflows' }">
+          <span class="nav-icon">🔄</span>
+          <span class="nav-text">AI工作流</span>
+        </NuxtLink>
         <NuxtLink to="/shares" class="nav-item" :class="{ active: $route.path === '/shares' }">
           <span class="nav-icon">🔗</span>
           <span class="nav-text">分享链接</span>
@@ -36,8 +40,15 @@
         <div class="topbar-title">{{ pageTitle }}</div>
         <div class="topbar-user">
           <div class="user-avatar">{{ adminInfo?.username?.charAt(0)?.toUpperCase() || 'A' }}</div>
-          <span>{{ adminInfo?.username || '管理员' }}</span>
-          <button class="logout-btn" @click="logout">退出</button>
+          <div class="user-info">
+            <span class="user-name">{{ adminInfo?.username || '管理员' }}</span>
+            <span v-if="adminInfo?.role" class="user-role" :class="adminInfo.role">{{ getRoleName(adminInfo.role) }}</span>
+          </div>
+          <button class="logout-btn" @click="logout" title="退出登录">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+          </button>
         </div>
       </header>
 
@@ -51,18 +62,42 @@
 
 <script setup>
 import { useAdminAuth } from '~/composables/useAdminAuth';
+import { useDialog } from '~/composables/useDialog';
 
 const route = useRoute();
-const { adminInfo, logout } = useAdminAuth();
+const { adminInfo, logout, initAuth } = useAdminAuth();
+const { alertVisible, closeAlert } = useDialog();
+
+// 确保在客户端初始化
+onMounted(() => {
+  initAuth();
+});
+
+// 路由切换时关闭顶部弹窗
+watch(() => route.path, () => {
+  if (alertVisible.value) {
+    closeAlert();
+  }
+});
 
 const pageTitle = computed(() => {
   const titles = {
     '/': '仪表盘',
     '/users': '用户管理',
     '/models': '模型配置',
+    '/workflows': 'AI工作流',
     '/shares': '分享链接',
     '/settings': '系统设置'
   };
   return titles[route.path] || '后台管理';
 });
+
+const getRoleName = (role) => {
+  const names = {
+    'user': '普通用户',
+    'admin': '管理员',
+    'super_admin': '超级管理员'
+  };
+  return names[role] || '管理员';
+};
 </script>

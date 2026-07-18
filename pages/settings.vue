@@ -189,6 +189,7 @@
       v-model:visible="dialog.confirmVisible.value"
       :type="dialog.confirmType.value"
       :message="dialog.confirmMessage.value"
+      :bindings="dialog.confirmBindings.value"
       @confirm="dialog.handleConfirm"
       @cancel="dialog.handleCancel"
     />
@@ -199,6 +200,7 @@
       :type="dialog.alertType.value"
       :message="dialog.alertMessage.value"
       :duration="dialog.alertDuration.value"
+      :alert-key="dialog.alertKey.value"
     />
   </div>
 </template>
@@ -212,7 +214,7 @@ definePageMeta({
   middleware: ['admin']
 });
 
-const { fetchAPI } = useAdminAuth();
+const { fetchAPI, isSuperAdmin } = useAdminAuth();
 const dialog = useDialog();
 
 const registrationEnabled = ref(true);
@@ -331,6 +333,12 @@ const handleJumpPage = () => {
 };
 
 const toggleRegistration = async () => {
+  // 权限检查
+  if (!isSuperAdmin.value) {
+    dialog.showError('需要超级管理员权限');
+    return;
+  }
+
   const action = registrationEnabled.value ? '关闭' : '开放';
   const confirmed = await dialog.showConfirm(`确定要${action}注册功能吗？`);
   if (!confirmed) return;
@@ -344,6 +352,8 @@ const toggleRegistration = async () => {
     if (data.success) {
       registrationEnabled.value = !registrationEnabled.value;
       dialog.showSuccess(`注册功能已${registrationEnabled.value ? '开放' : '关闭'}`);
+    } else {
+      dialog.showError(data.error?.message || '操作失败');
     }
   } catch (error) {
     console.error('切换注册开关失败:', error);
@@ -352,6 +362,12 @@ const toggleRegistration = async () => {
 };
 
 const saveSettings = async () => {
+  // 权限检查
+  if (!isSuperAdmin.value) {
+    dialog.showError('需要超级管理员权限');
+    return;
+  }
+
   try {
     const response = await fetchAPI('/api/admin/config', {
       method: 'PUT',
@@ -364,6 +380,8 @@ const saveSettings = async () => {
     const data = await response.json();
     if (data.success) {
       dialog.showSuccess('设置已保存');
+    } else {
+      dialog.showError(data.error?.message || '保存失败');
     }
   } catch (error) {
     console.error('保存设置失败:', error);

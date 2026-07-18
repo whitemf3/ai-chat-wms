@@ -2,7 +2,7 @@
   <Teleport to="body">
     <Transition name="dialog">
       <div v-if="visible" class="dialog-overlay" @click="handleOverlayClick">
-        <div class="dialog-container" @click.stop>
+        <div :class="['dialog-container', { 'dialog-wide': bindings }]" @click.stop>
           <!-- Icon -->
           <div :class="['dialog-icon', type]">
             <svg v-if="type === 'confirm'" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,6 +21,37 @@
 
           <!-- Message -->
           <div class="dialog-message">{{ message }}</div>
+
+          <!-- Bindings List -->
+          <div v-if="bindings" class="bindings-container">
+            <div v-if="bindings.rules && bindings.rules.length > 0" class="binding-group">
+              <div class="binding-group-header">
+                <span class="binding-group-icon">📋</span>
+                <span class="binding-group-title">选择规则</span>
+                <span class="binding-count">{{ bindings.rules.length }}</span>
+              </div>
+              <div class="binding-list">
+                <div v-for="rule in bindings.rules" :key="rule.id" class="binding-item">
+                  <span class="binding-dot"></span>
+                  <span class="binding-name">{{ rule.name }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="bindings.workflows && bindings.workflows.length > 0" class="binding-group">
+              <div class="binding-group-header">
+                <span class="binding-group-icon">🔄</span>
+                <span class="binding-group-title">AI工作流</span>
+                <span class="binding-count">{{ bindings.workflows.length }}</span>
+              </div>
+              <div class="binding-list">
+                <div v-for="workflow in bindings.workflows" :key="workflow.id" class="binding-item">
+                  <span class="binding-dot"></span>
+                  <span class="binding-name">{{ workflow.name }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <!-- Buttons -->
           <div class="dialog-buttons">
@@ -57,6 +88,10 @@ const props = defineProps({
   message: {
     type: String,
     default: '',
+  },
+  bindings: {
+    type: Object,
+    default: null,
   },
   closeOnClickOverlay: {
     type: Boolean,
@@ -111,6 +146,10 @@ const handleCancel = () => {
   text-align: center;
 }
 
+.dialog-wide {
+  max-width: 480px;
+}
+
 .dark .dialog-container {
   background: #2a2b32;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
@@ -150,11 +189,91 @@ const handleCancel = () => {
   font-size: 15px;
   line-height: 1.6;
   color: #202123;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .dark .dialog-message {
   color: #ececf1;
+}
+
+/* Bindings Container */
+.bindings-container {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.binding-group {
+  margin-bottom: 16px;
+}
+
+.binding-group:last-child {
+  margin-bottom: 0;
+}
+
+.binding-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f5f5f7;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.dark .binding-group-header {
+  background: #3a3a3c;
+}
+
+.binding-group-icon {
+  font-size: 16px;
+}
+
+.binding-group-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.dark .binding-group-title {
+  color: #f5f5f7;
+}
+
+.binding-count {
+  margin-left: auto;
+  padding: 2px 8px;
+  background: #007aff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.binding-list {
+  padding-left: 12px;
+}
+
+.binding-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.binding-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #86868b;
+  flex-shrink: 0;
+}
+
+.binding-name {
+  font-size: 14px;
+  color: #333;
+}
+
+.dark .binding-name {
+  color: #d1d1d6;
 }
 
 .dialog-buttons {

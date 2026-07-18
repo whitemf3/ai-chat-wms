@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="alert">
-      <div v-if="visible" :class="['top-alert', type]">
+      <div v-if="visible" :key="alertKey" :class="['top-alert', type]">
         <div class="alert-content">
           <span class="alert-icon">
             <svg v-if="type === 'warning'" width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
@@ -47,23 +47,16 @@ const props = defineProps({
     type: Number,
     default: 3000,
   },
+  alertKey: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const emit = defineEmits(['update:visible', 'close']);
 
-let timer = null;
-
-watch(() => props.visible, (val) => {
-  if (val && props.duration > 0) {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      close();
-    }, props.duration);
-  }
-});
-
+// 定时器由 composable 统一管理，组件只负责关闭事件
 const close = () => {
-  clearTimeout(timer);
   emit('update:visible', false);
   emit('close');
 };
