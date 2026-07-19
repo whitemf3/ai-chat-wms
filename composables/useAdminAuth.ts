@@ -8,7 +8,7 @@ export const useAdminAuth = defineStore('adminAuth', () => {
 
   // 初始化认证状态
   const initAuth = () => {
-    if (process.client && !initialized.value) {
+    if (process.client) {
       const savedToken = localStorage.getItem('admin_token');
       const savedAdmin = localStorage.getItem('admin_info');
       if (savedToken && savedAdmin) {

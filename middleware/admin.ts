@@ -18,8 +18,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // 如果有 token，初始化 store
   if (token && adminInfo) {
     const adminAuth = useAdminAuth();
-    if (!adminAuth.initialized) {
-      adminAuth.initAuth();
-    }
+    // 强制重新初始化，确保 adminInfo 正确设置
+    adminAuth.initAuth();
   }
 });

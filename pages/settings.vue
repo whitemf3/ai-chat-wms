@@ -46,6 +46,12 @@
         <input v-model.number="settings.max_conversations_per_user" type="number" class="form-input" />
       </div>
 
+      <div class="form-group">
+        <label class="form-label">AI 打字效果延迟 (毫秒)</label>
+        <input v-model.number="settings.typing_delay" type="number" class="form-input" min="0" max="100" />
+        <p class="form-hint">每个字符的显示延迟时间，0 表示禁用打字效果。建议范围：10-50ms</p>
+      </div>
+
       <button class="btn btn-primary" @click="saveSettings" style="margin-top: 16px;">
         保存设置
       </button>
@@ -214,14 +220,27 @@ definePageMeta({
   middleware: ['admin']
 });
 
-const { fetchAPI, isSuperAdmin } = useAdminAuth();
+const adminAuth = useAdminAuth();
 const dialog = useDialog();
+
+// 确保初始化
+onMounted(() => {
+  if (!adminAuth.adminInfo) {
+    adminAuth.initAuth();
+  }
+});
+
+// 使用 computed 保持响应性
+const isSuperAdmin = computed(() => adminAuth.adminInfo?.role === 'super_admin');
+const adminInfo = computed(() => adminAuth.adminInfo);
+const fetchAPI = adminAuth.fetchAPI;
 
 const registrationEnabled = ref(true);
 const settings = ref({
   site_name: 'AI Chat',
   default_model: '@cf/meta/llama-3.2-3b-instruct',
-  max_conversations_per_user: 100
+  max_conversations_per_user: 100,
+  typing_delay: 15
 });
 const availableModels = ref([
   '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
@@ -272,7 +291,8 @@ const loadConfig = async () => {
       settings.value = {
         site_name: config.site_name?.value || 'AI Chat',
         default_model: config.default_model?.value || '@cf/meta/llama-3.2-3b-instruct',
-        max_conversations_per_user: parseInt(config.max_conversations_per_user?.value || '100')
+        max_conversations_per_user: parseInt(config.max_conversations_per_user?.value || '100'),
+        typing_delay: parseInt(config.typing_delay?.value || '15')
       };
     }
   } catch (error) {
@@ -333,8 +353,11 @@ const handleJumpPage = () => {
 };
 
 const toggleRegistration = async () => {
-  // 权限检查
-  if (!isSuperAdmin.value) {
+  // 等待初始化完成
+  await nextTick();
+
+  // 权限检查 - 使用 adminInfo 直接判断
+  if (!adminInfo.value || adminInfo.value.role !== 'super_admin') {
     dialog.showError('需要超级管理员权限');
     return;
   }
@@ -363,8 +386,14 @@ const toggleRegistration = async () => {
 
 const saveSettings = async () => {
   // 权限检查
-  if (!isSuperAdmin.value) {
+  if (!adminAuth.adminInfo || adminAuth.adminInfo.role !== 'super_admin') {
     dialog.showError('需要超级管理员权限');
+    return;
+  }
+
+  // 验证打字延迟范围
+  if (settings.value.typing_delay < 0 || settings.value.typing_delay > 100) {
+    dialog.showError('打字延迟必须在 0-100 毫秒之间');
     return;
   }
 
@@ -374,7 +403,8 @@ const saveSettings = async () => {
       body: JSON.stringify({
         site_name: settings.value.site_name,
         default_model: settings.value.default_model,
-        max_conversations_per_user: settings.value.max_conversations_per_user.toString()
+        max_conversations_per_user: settings.value.max_conversations_per_user.toString(),
+        typing_delay: settings.value.typing_delay.toString()
       })
     });
     const data = await response.json();
@@ -400,6 +430,17 @@ onMounted(() => {
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* 表单提示 */
+.form-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #86868b;
+}
+
+.dark .form-hint {
+  color: #86868b;
 }
 
 /* 筛选栏样式 */
