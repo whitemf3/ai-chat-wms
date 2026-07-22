@@ -54,6 +54,8 @@
         <div class="col-param">Context</div>
         <div class="col-param">Output</div>
         <div class="col-param">Temp</div>
+        <div class="col-price">输入价格</div>
+        <div class="col-price">输出价格</div>
         <div class="col-actions">操作</div>
       </div>
 
@@ -75,6 +77,8 @@
           <div class="col-param">{{ model.context_window }}</div>
           <div class="col-param">{{ model.max_output_tokens }}</div>
           <div class="col-param">{{ model.temperature }}</div>
+          <div class="col-price">{{ model.input_price?.toLocaleString() || 0 }}</div>
+          <div class="col-price">{{ model.output_price?.toLocaleString() || 0 }}</div>
           <div class="col-actions">
             <template v-if="isSuperAdmin">
               <button
@@ -233,6 +237,23 @@
             <label class="form-label">排序</label>
             <input v-model.number="modelForm.display_order" type="number" class="form-input" />
           </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">输入价格 (Neurons/百万tokens) *</label>
+            <input v-model.number="modelForm.input_price" type="number" class="form-input" placeholder="如: 4625" @change="onPriceChange" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">输出价格 (Neurons/百万tokens) *</label>
+            <input v-model.number="modelForm.output_price" type="number" class="form-input" placeholder="如: 30475" @change="onPriceChange" />
+          </div>
+        </div>
+
+        <!-- 自动填充提示 -->
+        <div v-if="presetPricing" class="preset-hint">
+          <span class="preset-icon">✓</span>
+          <span class="preset-text">已匹配预设定价，输入价格已自动填充</span>
         </div>
 
         <!-- 测试区域 -->
@@ -434,9 +455,15 @@ const defaultModelForm = {
   context_window: 4096,
   max_output_tokens: 2048,
   temperature: 0.7,
-  display_order: 0
+  display_order: 0,
+  input_price: 0,
+  output_price: 0
 };
 const modelForm = ref({ ...defaultModelForm });
+
+// 预设定价
+const presetPricing = ref(null);
+const allPresetPricings = ref([]);
 
 // 模型测试相关
 const testingModel = ref(false);
@@ -477,6 +504,38 @@ const loadModels = async () => {
   }
 };
 
+// 加载预设定价
+const loadPresetPricings = async () => {
+  try {
+    const response = await fetchAPI('/api/admin/models/pricing-preset');
+    const data = await response.json();
+    if (data.success) {
+      allPresetPricings.value = data.data;
+    }
+  } catch (error) {
+    console.error('获取预设定价失败:', error);
+  }
+};
+
+// 监听模型ID变化，自动填充预设价格
+watch(() => modelForm.value.model_id, (newModelId) => {
+  if (newModelId && allPresetPricings.value.length > 0) {
+    const preset = allPresetPricings.value.find(p => p.modelId === newModelId);
+    if (preset) {
+      modelForm.value.input_price = preset.inputPrice;
+      modelForm.value.output_price = preset.outputPrice;
+      presetPricing.value = preset;
+    } else {
+      presetPricing.value = null;
+    }
+  }
+});
+
+// 价格手动修改时清除预设提示
+const onPriceChange = () => {
+  presetPricing.value = null;
+};
+
 const editModel = (model) => {
   modelForm.value = { ...model };
   showEditModal.value = true;
@@ -488,6 +547,7 @@ const closeModelModal = () => {
   modelForm.value = { ...defaultModelForm };
   modelTestResult.value = null;
   showErrorDetail.value = false;
+  presetPricing.value = null;
 };
 
 // 切换错误详情显示
@@ -903,6 +963,7 @@ const testRules = async () => {
 onMounted(() => {
   loadModels();
   loadRules();
+  loadPresetPricings();
 });
 </script>
 
@@ -1100,6 +1161,13 @@ onMounted(() => {
   width: 90px;
   text-align: center;
   flex-shrink: 0;
+}
+
+.col-price {
+  width: 100px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 12px;
 }
 
 .col-actions {
@@ -1527,6 +1595,38 @@ onMounted(() => {
   margin-top: 4px;
   font-size: 12px;
   color: #86868b;
+}
+
+.preset-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #e8f5e9;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.dark .preset-hint {
+  background: #1b5e20;
+}
+
+.preset-icon {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.dark .preset-icon {
+  color: #a5d6a7;
+}
+
+.preset-text {
+  font-size: 13px;
+  color: #2e7d32;
+}
+
+.dark .preset-text {
+  color: #a5d6a7;
 }
 
 .range-inputs {

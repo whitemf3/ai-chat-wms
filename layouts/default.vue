@@ -14,6 +14,10 @@
           <span class="nav-icon">👥</span>
           <span class="nav-text">用户管理</span>
         </NuxtLink>
+        <NuxtLink to="/quota" class="nav-item" :class="{ active: $route.path === '/quota' }">
+          <span class="nav-icon">📈</span>
+          <span class="nav-text">额度管理</span>
+        </NuxtLink>
         <NuxtLink to="/models" class="nav-item" :class="{ active: $route.path === '/models' }">
           <span class="nav-icon">🤖</span>
           <span class="nav-text">模型配置</span>
@@ -84,6 +88,7 @@ const pageTitle = computed(() => {
   const titles = {
     '/': '仪表盘',
     '/users': '用户管理',
+    '/quota': '额度管理',
     '/models': '模型配置',
     '/workflows': 'AI工作流',
     '/shares': '分享链接',

@@ -9,7 +9,12 @@
 
       <!-- 说明 -->
       <div class="workflow-notice">
-        <span class="notice-icon">🔄</span>
+        <span class="notice-icon">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h4M4 12h4M4 18h4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6l3 3-3 3M12 18l3-3-3-3" />
+          </svg>
+        </span>
         <span>工作流支持多个模型串联处理，实现图片描述→摘要生成→翻译等流水线能力。</span>
       </div>
 
@@ -38,7 +43,13 @@
           </div>
           <div class="workflow-desc">{{ workflow.description || '暂无描述' }}</div>
           <div class="workflow-meta">
-            <span class="meta-item">📋 {{ workflow.step_count || 0 }} 个步骤</span>
+            <span class="meta-item">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 3a2 2 0 002 2h2a2 2 0 002-2M9 3h6" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6M9 16h6" />
+              </svg>
+              {{ workflow.step_count || 0 }} 个步骤
+            </span>
           </div>
         </div>
 
@@ -61,20 +72,6 @@
         <div class="form-group">
           <label class="form-label">描述</label>
           <input v-model="workflowForm.description" type="text" class="form-input" placeholder="工作流描述" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">触发条件</label>
-          <div class="trigger-options">
-            <label class="trigger-option">
-              <input type="checkbox" v-model="triggerHasImage" />
-              <span>有图片附件时触发</span>
-            </label>
-            <label class="trigger-option">
-              <input type="checkbox" v-model="triggerDeepThink" />
-              <span>深度思考模式时触发</span>
-            </label>
-          </div>
         </div>
 
         <!-- 步骤配置 -->
@@ -272,9 +269,6 @@ const workflowForm = ref({
   description: ''
 });
 
-const triggerHasImage = ref(false);
-const triggerDeepThink = ref(false);
-
 const workflowSteps = ref([]);
 
 // 测试相关
@@ -358,11 +352,6 @@ const editWorkflow = async (workflow) => {
         description: data.data.description || ''
       };
 
-      // 解析触发条件
-      const trigger = data.data.trigger_condition ? JSON.parse(data.data.trigger_condition) : {};
-      triggerHasImage.value = trigger.has_image || false;
-      triggerDeepThink.value = trigger.deep_think || false;
-
       // 加载步骤
       workflowSteps.value = (data.data.steps || []).map(step => ({
         step_type: step.step_type,
@@ -383,18 +372,11 @@ const closeModal = () => {
   showAddModal.value = false;
   showEditModal.value = false;
   workflowForm.value = { id: '', name: '', description: '' };
-  triggerHasImage.value = false;
-  triggerDeepThink.value = false;
   workflowSteps.value = [];
 };
 
 const saveWorkflow = async () => {
   try {
-    const triggerCondition = {
-      has_image: triggerHasImage.value,
-      deep_think: triggerDeepThink.value
-    };
-
     const steps = workflowSteps.value.map((step, index) => ({
       ...step,
       config: { max_tokens: step.max_tokens || 200 }
@@ -402,7 +384,6 @@ const saveWorkflow = async () => {
 
     const payload = {
       ...workflowForm.value,
-      trigger_condition: triggerCondition,
       steps
     };
 
@@ -545,7 +526,14 @@ onMounted(() => {
 }
 
 .notice-icon {
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0071e3;
+}
+
+.dark .notice-icon {
+  color: #0a84ff;
 }
 
 .workflow-list {
@@ -610,7 +598,11 @@ onMounted(() => {
 .meta-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+}
+
+.meta-item svg {
+  opacity: 0.6;
 }
 
 .status-badge {
@@ -740,26 +732,6 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-}
-
-/* Trigger Options */
-.trigger-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.trigger-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #333;
-  cursor: pointer;
-}
-
-.dark .trigger-option {
-  color: #e5e5e7;
 }
 
 /* Steps */
