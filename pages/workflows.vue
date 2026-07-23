@@ -60,7 +60,7 @@
     </div>
 
     <!-- 新建/编辑工作流弹窗 -->
-    <div v-if="showAddModal || showEditModal" class="modal-overlay" @click="closeModal">
+    <div v-if="showAddModal || showEditModal" class="modal-overlay" @mousedown="onOverlayMouseDown" @click="onWorkflowOverlayClick">
       <div class="modal-content modal-large" @click.stop>
         <h3 class="modal-title">{{ showEditModal ? '编辑工作流' : '新建工作流' }}</h3>
 
@@ -92,7 +92,7 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">步骤类型</label>
-                    <select v-model="step.step_type" class="form-input">
+                    <select v-model="step.step_type" class="filter-select">
                       <option value="llm">LLM 文本生成</option>
                       <option value="vision">视觉模型</option>
                       <option value="translate">翻译模型</option>
@@ -100,7 +100,7 @@
                   </div>
                   <div class="form-group">
                     <label class="form-label">使用模型</label>
-                    <select v-model="step.model_id" class="form-input">
+                    <select v-model="step.model_id" class="filter-select">
                       <option value="">请选择模型</option>
                       <option v-for="model in enabledModels" :key="model.model_id" :value="model.model_id">
                         {{ model.name }}
@@ -146,7 +146,7 @@
     </div>
 
     <!-- 查看工作流详情弹窗 -->
-    <div v-if="showViewModal" class="modal-overlay" @click="showViewModal = false">
+    <div v-if="showViewModal" class="modal-overlay" @mousedown="onOverlayMouseDown" @click="onViewOverlayClick">
       <div class="modal-content modal-large" @click.stop>
         <h3 class="modal-title">{{ currentWorkflow?.name }}</h3>
         <p class="modal-desc">{{ currentWorkflow?.description || '暂无描述' }}</p>
@@ -252,6 +252,31 @@ definePageMeta({
 
 const { fetchAPI, isSuperAdmin } = useAdminAuth();
 const dialog = useDialog();
+
+// 弹窗关闭逻辑：记录鼠标按下时的目标元素
+const overlayMouseDownTarget = ref(null);
+
+const onOverlayMouseDown = (e) => {
+  if (e.target === e.currentTarget) {
+    overlayMouseDownTarget.value = e.target;
+  } else {
+    overlayMouseDownTarget.value = null;
+  }
+};
+
+const onWorkflowOverlayClick = (e) => {
+  if (overlayMouseDownTarget.value === e.currentTarget && e.target === e.currentTarget) {
+    closeModal();
+  }
+  overlayMouseDownTarget.value = null;
+};
+
+const onViewOverlayClick = (e) => {
+  if (overlayMouseDownTarget.value === e.currentTarget && e.target === e.currentTarget) {
+    showViewModal.value = false;
+  }
+  overlayMouseDownTarget.value = null;
+};
 
 const workflows = ref([]);
 const models = ref([]);

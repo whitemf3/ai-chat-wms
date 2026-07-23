@@ -4,7 +4,7 @@
     <div class="page-header">
       <h2 class="page-title">用户额度管理</h2>
       <div class="page-actions">
-        <select v-model="filterType" class="form-input filter-select">
+        <select v-model="filterType" class="filter-select" style="width: 150px;">
           <option value="all">全部用户</option>
           <option value="limited">有限额用户</option>
           <option value="unlimited">无限制用户</option>
@@ -85,7 +85,7 @@
     </div>
 
     <!-- 设置额度弹窗 -->
-    <div v-if="showQuotaModal" class="modal-overlay" @click="closeQuotaModal">
+    <div v-if="showQuotaModal" class="modal-overlay" @mousedown="onOverlayMouseDown" @click="onQuotaOverlayClick">
       <div class="modal-content" @click.stop>
         <h3 class="modal-title">设置用户额度</h3>
 
@@ -118,7 +118,7 @@
     </div>
 
     <!-- 历史记录弹窗 -->
-    <div v-if="showHistoryModal" class="modal-overlay" @click="closeHistoryModal">
+    <div v-if="showHistoryModal" class="modal-overlay" @mousedown="onOverlayMouseDown" @click="onHistoryOverlayClick">
       <div class="modal-content modal-large" @click.stop>
         <h3 class="modal-title">使用历史 - {{ historyUser?.email }}</h3>
 
@@ -168,6 +168,31 @@ definePageMeta({
 
 const { fetchAPI, isSuperAdmin } = useAdminAuth();
 const dialog = useDialog();
+
+// 弹窗关闭逻辑：记录鼠标按下时的目标元素
+const overlayMouseDownTarget = ref(null);
+
+const onOverlayMouseDown = (e) => {
+  if (e.target === e.currentTarget) {
+    overlayMouseDownTarget.value = e.target;
+  } else {
+    overlayMouseDownTarget.value = null;
+  }
+};
+
+const onQuotaOverlayClick = (e) => {
+  if (overlayMouseDownTarget.value === e.currentTarget && e.target === e.currentTarget) {
+    closeQuotaModal();
+  }
+  overlayMouseDownTarget.value = null;
+};
+
+const onHistoryOverlayClick = (e) => {
+  if (overlayMouseDownTarget.value === e.currentTarget && e.target === e.currentTarget) {
+    closeHistoryModal();
+  }
+  overlayMouseDownTarget.value = null;
+};
 
 // 用户列表
 const users = ref([]);

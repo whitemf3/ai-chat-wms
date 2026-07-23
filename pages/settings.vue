@@ -34,7 +34,7 @@
 
       <div class="form-group">
         <label class="form-label">默认模型</label>
-        <select v-model="settings.default_model" class="form-input">
+        <select v-model="settings.default_model" class="filter-select">
           <option v-for="model in availableModels" :key="model" :value="model">
             {{ model }}
           </option>

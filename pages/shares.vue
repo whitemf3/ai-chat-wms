@@ -146,7 +146,7 @@
     </div>
 
     <!-- 延长有效期弹窗 -->
-    <div v-if="extendModal.visible" class="modal-overlay" @click="extendModal.visible = false">
+    <div v-if="extendModal.visible" class="modal-overlay" @mousedown="onOverlayMouseDown" @click="onExtendOverlayClick">
       <div class="modal-content" @click.stop>
         <h3>延长有效期</h3>
         <p style="color: #86868b; margin-bottom: 16px;">
@@ -173,7 +173,7 @@
     </div>
 
     <!-- 重新生效弹窗 -->
-    <div v-if="activateModal.visible" class="modal-overlay" @click="activateModal.visible = false">
+    <div v-if="activateModal.visible" class="modal-overlay" @mousedown="onOverlayMouseDown" @click="onActivateOverlayClick">
       <div class="modal-content" @click.stop>
         <h3>重新生效链接</h3>
         <p style="color: #86868b; margin-bottom: 16px;">
@@ -231,6 +231,31 @@ definePageMeta({
 
 const { fetchAPI, isSuperAdmin } = useAdminAuth();
 const dialog = useDialog();
+
+// 弹窗关闭逻辑：记录鼠标按下时的目标元素
+const overlayMouseDownTarget = ref(null);
+
+const onOverlayMouseDown = (e) => {
+  if (e.target === e.currentTarget) {
+    overlayMouseDownTarget.value = e.target;
+  } else {
+    overlayMouseDownTarget.value = null;
+  }
+};
+
+const onExtendOverlayClick = (e) => {
+  if (overlayMouseDownTarget.value === e.currentTarget && e.target === e.currentTarget) {
+    extendModal.value.visible = false;
+  }
+  overlayMouseDownTarget.value = null;
+};
+
+const onActivateOverlayClick = (e) => {
+  if (overlayMouseDownTarget.value === e.currentTarget && e.target === e.currentTarget) {
+    activateModal.value.visible = false;
+  }
+  overlayMouseDownTarget.value = null;
+};
 
 const shares = ref([]);
 const searchText = ref('');

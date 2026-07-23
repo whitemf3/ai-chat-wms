@@ -198,7 +198,7 @@
     </div>
 
     <!-- 添加/编辑模型弹窗 -->
-    <div v-if="showAddModal || showEditModal" class="modal-overlay" @click="closeModelModal">
+    <div v-if="showAddModal || showEditModal" class="modal-overlay" @mousedown="onOverlayMouseDown" @click="onOverlayClick">
       <div class="modal-content" @click.stop>
         <h3 class="modal-title">{{ showEditModal ? '编辑模型' : '添加模型' }}</h3>
 
@@ -310,7 +310,7 @@
     </div>
 
     <!-- 添加/编辑规则弹窗 -->
-    <div v-if="showAddRuleModal || showEditRuleModal" class="modal-overlay" @click="closeRuleModal">
+    <div v-if="showAddRuleModal || showEditRuleModal" class="modal-overlay" @mousedown="onOverlayMouseDown" @click="onRuleOverlayClick">
       <div class="modal-content modal-large" @click.stop>
         <h3 class="modal-title">{{ showEditRuleModal ? '编辑规则' : '添加规则' }}</h3>
 
@@ -326,7 +326,7 @@
 
         <div class="form-group">
           <label class="form-label">条件类型 *</label>
-          <select v-model="ruleForm.condition_type" class="form-input">
+          <select v-model="ruleForm.condition_type" class="filter-select">
             <option value="has_image">有图片附件</option>
             <option value="deep_think">深度思考模式</option>
             <option value="translate">翻译任务</option>
@@ -371,7 +371,7 @@
 
         <div class="form-group">
           <label class="form-label">目标模型 *</label>
-          <select v-model="ruleForm.target_model_id" class="form-input">
+          <select v-model="ruleForm.target_model_id" class="filter-select">
             <option value="">请选择模型</option>
             <option v-for="model in enabledModels" :key="model.model_id" :value="model.model_id">
               {{ model.name }}
@@ -423,6 +423,33 @@ definePageMeta({
 
 const { fetchAPI, isSuperAdmin } = useAdminAuth();
 const dialog = useDialog();
+
+// 弹窗关闭逻辑：记录鼠标按下时的目标元素
+const overlayMouseDownTarget = ref(null);
+
+const onOverlayMouseDown = (e) => {
+  // 只有当鼠标在遮罩层本身上按下时才记录
+  if (e.target === e.currentTarget) {
+    overlayMouseDownTarget.value = e.target;
+  } else {
+    overlayMouseDownTarget.value = null;
+  }
+};
+
+const onOverlayClick = (e) => {
+  // 只有当鼠标按下和释放都在遮罩层上时才关闭
+  if (overlayMouseDownTarget.value === e.currentTarget && e.target === e.currentTarget) {
+    closeModelModal();
+  }
+  overlayMouseDownTarget.value = null;
+};
+
+const onRuleOverlayClick = (e) => {
+  if (overlayMouseDownTarget.value === e.currentTarget && e.target === e.currentTarget) {
+    closeRuleModal();
+  }
+  overlayMouseDownTarget.value = null;
+};
 
 // Tab 状态
 const activeTab = ref('models');

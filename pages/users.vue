@@ -15,7 +15,7 @@
           style="flex: 1;"
           @input="searchUsers"
         />
-        <select v-model="statusFilter" class="form-input" style="width: 150px;" @change="loadUsers">
+        <select v-model="statusFilter" class="filter-select" style="width: 150px;" @change="loadUsers">
           <option value="">全部状态</option>
           <option value="active">正常</option>
           <option value="banned">已封禁</option>
