@@ -188,7 +188,7 @@ runtimeConfig: {
 
 1. 连接 GitHub 仓库到 Cloudflare Pages
 2. 配置构建命令：
-   - Build command: `npm run generate`
+   - Build command: `npm run build`
    - Build output directory: `dist`
 3. 设置环境变量 `NUXT_PUBLIC_API_BASE`
 
@@ -235,8 +235,8 @@ A: 确保依赖完整安装：`rm -rf node_modules && npm install`。
 
 ## 相关项目
 
-- [worker](../worker/) - Cloudflare Workers API 后端
-- [web](../web/) - AI Chat 前端用户界面
+- [worker](../../../ai-chat-worker/) - Cloudflare Workers API 后端
+- [web](../../../ai-chat-web/) - AI Chat 前端用户界面
 
 ## License
 
