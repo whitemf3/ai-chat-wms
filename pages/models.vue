@@ -160,8 +160,8 @@
         </div>
       </div>
 
-      <!-- 测试面板 -->
-      <div class="test-panel">
+      <!-- 测试面板（仅超级管理员可见） -->
+      <div v-if="isSuperAdmin" class="test-panel">
         <div class="test-panel-header">
           <span class="test-icon">🧪</span>
           <span>测试规则匹配</span>

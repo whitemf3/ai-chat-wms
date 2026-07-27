@@ -177,8 +177,8 @@
           </div>
         </div>
 
-        <!-- 测试面板 -->
-        <div class="test-section">
+        <!-- 测试面板（仅超级管理员可见） -->
+        <div v-if="isSuperAdmin" class="test-section">
           <h4 class="test-title">🧪 测试工作流</h4>
           <div class="test-body">
             <input
