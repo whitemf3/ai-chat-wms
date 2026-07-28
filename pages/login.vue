@@ -31,6 +31,11 @@
           />
         </div>
 
+        <!-- Turnstile widget -->
+        <div class="turnstile-wrapper">
+          <div class="cf-turnstile" data-sitekey="0x4AAAAAAD_yxEkCTD6muHx5" data-action="turnstile-spin-v2"></div>
+        </div>
+
         <button type="submit" class="btn btn-primary login-btn" :disabled="loading">
           {{ loading ? '登录中...' : '登录' }}
         </button>
@@ -46,6 +51,17 @@ definePageMeta({
   layout: false
 });
 
+// Load Turnstile script
+useHead({
+  script: [
+    {
+      src: 'https://challenges.cloudflare.com/turnstile/v0/api.js',
+      async: true,
+      defer: true,
+    },
+  ],
+});
+
 const { login } = useAdminAuth();
 
 const email = ref('');
@@ -59,17 +75,40 @@ const handleLogin = async () => {
     return;
   }
 
+  // Get Turnstile token
+  const turnstileToken = document.querySelector('input[name="cf-turnstile-response"]')?.value;
+  if (!turnstileToken) {
+    error.value = '请完成人机验证';
+    return;
+  }
+
   loading.value = true;
   error.value = '';
 
-  const result = await login(email.value, password.value);
+  const result = await login(email.value, password.value, turnstileToken);
 
   if (result.success) {
     navigateTo('/');
   } else {
     error.value = result.error;
+    // Reset Turnstile widget on failure
+    if (window.turnstile) {
+      window.turnstile.reset();
+    }
   }
 
   loading.value = false;
 };
 </script>
+
+<style scoped>
+.turnstile-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+.dark .turnstile-wrapper iframe {
+  color-scheme: dark;
+}
+</style>

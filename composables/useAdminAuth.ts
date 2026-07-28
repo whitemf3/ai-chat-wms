@@ -32,12 +32,12 @@ export const useAdminAuth = defineStore('adminAuth', () => {
   };
 
   // 登录
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, turnstileToken?: string) => {
     try {
       const response = await fetch(`${config.public.apiBase}/api/admin/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, turnstileToken })
       });
 
       const data = await response.json();
