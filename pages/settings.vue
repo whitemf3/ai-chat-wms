@@ -235,6 +235,16 @@ const isSuperAdmin = computed(() => adminAuth.adminInfo?.role === 'super_admin')
 const adminInfo = computed(() => adminAuth.adminInfo);
 const fetchAPI = adminAuth.fetchAPI;
 
+// 权限检查 - 普通管理员不能访问系统设置
+onMounted(() => {
+  watch(isSuperAdmin, (value) => {
+    if (value === false) {
+      dialog.showError('需要超级管理员权限');
+      navigateTo('/');
+    }
+  }, { immediate: true });
+});
+
 const registrationEnabled = ref(true);
 const settings = ref({
   site_name: 'AI Chat',

@@ -30,7 +30,7 @@
           <span class="nav-icon">🔗</span>
           <span class="nav-text">分享链接</span>
         </NuxtLink>
-        <NuxtLink to="/settings" class="nav-item" :class="{ active: $route.path === '/settings' }">
+        <NuxtLink v-if="isSuperAdmin" to="/settings" class="nav-item" :class="{ active: $route.path === '/settings' }">
           <span class="nav-icon">⚙️</span>
           <span class="nav-text">系统设置</span>
         </NuxtLink>
@@ -69,7 +69,7 @@ import { useAdminAuth } from '~/composables/useAdminAuth';
 import { useDialog } from '~/composables/useDialog';
 
 const route = useRoute();
-const { adminInfo, logout, initAuth } = useAdminAuth();
+const { adminInfo, logout, initAuth, isSuperAdmin } = useAdminAuth();
 const { alertVisible, closeAlert } = useDialog();
 
 // 确保在客户端初始化
