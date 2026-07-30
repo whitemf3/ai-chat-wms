@@ -8,6 +8,9 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: 'cloudflare-pages',
+    prerender: {
+      routes: ['/']   // 强制预渲染根路由
+    }
   },
 
   app: {
