@@ -1,5 +1,9 @@
 import { defineNuxtConfig } from 'nuxt/config';
 
+const platform = process.env.NUXT_PLATFORM
+const isEdgeOne = platform === 'edgeone'
+const isCloudflare = platform === 'cloudflare'
+
 export default defineNuxtConfig({
   compatibilityDate: '2024-01-01',
   devtools: { enabled: true },
@@ -7,11 +11,25 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt'],
 
   nitro: {
-    preset: 'cloudflare-pages',
-    prerender: {
-      routes: ['/']   // 强制预渲染根路由
-    }
+    ...(isCloudflare
+      ? {
+          preset: 'cloudflare-pages'
+        }
+      : {
+          preset: 'static'
+        })
   },
+
+
+  ...(isEdgeOne
+    ? {
+        routeRules: {
+          '/**': {
+            prerender: true
+          }
+        }
+      }
+    : {}),
 
   app: {
     head: {
