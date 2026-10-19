@@ -200,10 +200,18 @@
 
           <div v-if="executionResult" class="execution-result">
             <h5>执行结果</h5>
+            <!-- 文生图步骤生成的图片 -->
+            <div v-if="executionResult.images && executionResult.images.length" class="result-images">
+              <div v-for="(img, idx) in executionResult.images" :key="'img-' + idx" class="result-image-item">
+                <img :src="img.url" class="result-image" :alt="`步骤${img.step}生成图片`" @click="previewImage(img.url)" />
+                <span class="result-image-label">步骤{{ img.step }} · {{ img.model }}</span>
+              </div>
+            </div>
             <div class="result-outputs">
               <div v-for="(value, key) in executionResult.outputs" :key="key" class="result-item">
                 <span class="result-key">{{ key }}:</span>
-                <span class="result-value">{{ value }}</span>
+                <span v-if="isDataUrl(value)" class="result-value result-value-image" title="生成的图片（见上方预览）" @click="previewImage(value)">[生成图片，点击预览]</span>
+                <span v-else class="result-value">{{ value }}</span>
               </div>
             </div>
             <div class="execution-log">
@@ -219,6 +227,12 @@
           <button class="btn btn-secondary" @click="showViewModal = false">关闭</button>
         </div>
       </div>
+    </div>
+
+    <!-- 测试结果图片预览弹窗 -->
+    <div v-if="imagePreview" class="test-image-preview-overlay" @click="closeImagePreview">
+      <img :src="imagePreview" class="test-image-preview-content" @click.stop alt="生成的图片" />
+      <button class="test-image-preview-close" @click="closeImagePreview" title="关闭">×</button>
     </div>
 
     <!-- 确认弹窗 -->
@@ -507,6 +521,16 @@ const executeWorkflow = async () => {
   } finally {
     executing.value = false;
   }
+};
+
+// 测试结果图片预览
+const imagePreview = ref(null);
+const isDataUrl = (value) => typeof value === 'string' && value.startsWith('data:image/');
+const previewImage = (url) => {
+  imagePreview.value = url;
+};
+const closeImagePreview = () => {
+  imagePreview.value = null;
 };
 
 onMounted(() => {
@@ -1002,6 +1026,92 @@ onMounted(() => {
 
 .dark .result-value {
   color: #e5e5e7;
+}
+
+/* 文生图测试结果图片 */
+.result-images {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.result-image-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.result-image {
+  width: 140px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e5e5ea;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.result-image:hover {
+  transform: scale(1.03);
+}
+
+.result-image-label {
+  font-size: 11px;
+  color: #86868b;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-value-image {
+  color: #0071e3;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* 图片预览弹窗 */
+.test-image-preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  cursor: zoom-out;
+}
+
+.test-image-preview-content {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.test-image-preview-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.test-image-preview-close:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .execution-log {
