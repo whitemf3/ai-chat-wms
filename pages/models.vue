@@ -241,12 +241,17 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">输入价格 (Neurons/百万tokens) *</label>
-            <input v-model.number="modelForm.input_price" type="number" class="form-input" placeholder="如: 4625" @change="onPriceChange" />
+            <label class="form-label">
+              {{ isImageModelForm ? '输入价格 (Neurons/张) *' : '输入价格 (Neurons/百万tokens) *' }}
+            </label>
+            <input v-model.number="modelForm.input_price" type="number" class="form-input" :placeholder="isImageModelForm ? '如: 173（每张图片消耗）' : '如: 4625'" @change="onPriceChange" />
+            <div v-if="isImageModelForm" class="form-hint">文生图模型按张计费：每次生成一张图消耗此处配置的 Neurons（0 表示免费）</div>
           </div>
           <div class="form-group">
-            <label class="form-label">输出价格 (Neurons/百万tokens) *</label>
-            <input v-model.number="modelForm.output_price" type="number" class="form-input" placeholder="如: 30475" @change="onPriceChange" />
+            <label class="form-label">
+              {{ isImageModelForm ? '输出价格（文生图不适用）' : '输出价格 (Neurons/百万tokens) *' }}
+            </label>
+            <input v-model.number="modelForm.output_price" type="number" class="form-input" :disabled="isImageModelForm" :placeholder="isImageModelForm ? '无需填写，固定为 0' : '如: 30475'" @change="onPriceChange" />
           </div>
         </div>
 
@@ -508,6 +513,22 @@ const modelForm = ref({ ...defaultModelForm });
 const presetPricing = ref(null);
 const allPresetPricings = ref([]);
 
+// 文生图模型清单（与 worker imageGen.ts 保持一致）
+const IMAGE_MODELS = [
+  '@cf/black-forest-labs/flux-2-dev',
+  '@cf/black-forest-labs/flux-1-schnell',
+  '@cf/bytedance/stable-diffusion-xl-lightning',
+  '@cf/bytedance/stable-diffusion-xl-base-1.0',
+  '@cf/stabilityai/stable-diffusion-xl-base-1.0',
+  '@cf/stabilityai/stable-diffusion-3.5-large',
+  '@cf/stabilityai/stable-diffusion-3.5-large-turbo',
+  '@cf/lykon/dreamshaper-8-lcm',
+  '@cf/google/dreamboat-xl',
+];
+const isImageModel = (modelId) => IMAGE_MODELS.includes(modelId);
+// 当前表单是否为文生图模型（用于价格字段文案与单位切换）
+const isImageModelForm = computed(() => isImageModel(modelForm.value.model_id));
+
 // 模型测试相关
 const testingModel = ref(false);
 const modelTestResult = ref(null);
@@ -571,6 +592,10 @@ watch(() => modelForm.value.model_id, (newModelId) => {
     } else {
       presetPricing.value = null;
     }
+  }
+  // 文生图模型固定 output_price = 0（按张计费只看输入价格）
+  if (isImageModel(newModelId)) {
+    modelForm.value.output_price = 0;
   }
 });
 
