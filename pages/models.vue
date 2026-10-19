@@ -280,6 +280,16 @@
               <span class="response-label">模型响应：</span>
               <span class="response-text">{{ modelTestResult.response }}</span>
             </div>
+            <!-- 文生图模型：展示生成的测试图片 -->
+            <div v-if="modelTestResult.imageUrl" class="test-image-result">
+              <span class="response-label">生成图片：</span>
+              <img
+                :src="modelTestResult.imageUrl"
+                class="test-generated-image"
+                alt="测试生成的图片"
+                @click="previewTestImage(modelTestResult.imageUrl)"
+              />
+            </div>
             <div v-if="modelTestResult.errorDetail" class="test-error-detail">
               <div class="error-header" @click="toggleErrorDetail">
                 <span class="error-toggle">{{ showErrorDetail ? '▼' : '▶' }}</span>
@@ -410,6 +420,12 @@
       :duration="dialog.alertDuration.value"
       :alert-key="dialog.alertKey.value"
     />
+
+    <!-- 文生图测试图片预览弹窗 -->
+    <div v-if="testImagePreview" class="test-image-preview-overlay" @click="closeTestImagePreview">
+      <img :src="testImagePreview" class="test-image-preview-content" @click.stop alt="测试生成的图片" />
+      <button class="test-image-preview-close" @click="closeTestImagePreview" title="关闭">×</button>
+    </div>
   </div>
 </template>
 
@@ -582,6 +598,17 @@ const toggleErrorDetail = () => {
   showErrorDetail.value = !showErrorDetail.value;
 };
 
+// 文生图测试图片预览
+const testImagePreview = ref('');
+
+const previewTestImage = (url) => {
+  testImagePreview.value = url;
+};
+
+const closeTestImagePreview = () => {
+  testImagePreview.value = '';
+};
+
 // 格式化 JSON 显示
 const formatJson = (str) => {
   try {
@@ -618,7 +645,9 @@ const testModel = async () => {
         success: true,
         message: '模型连接成功',
         response: data.data.response,
-        latency: data.data.latency
+        latency: data.data.latency,
+        // 文生图模型：展示生成的测试图片
+        imageUrl: data.data.is_image_model ? data.data.image_data_url : null
       };
     } else {
       // 判断错误信息是否是 JSON 格式
@@ -1800,6 +1829,74 @@ onMounted(() => {
 
 .dark .response-text {
   color: #e5e5e7;
+}
+
+/* 文生图测试结果图片 */
+.test-image-result {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e5e5;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dark .test-image-result {
+  border-top-color: #3a3a3c;
+}
+
+.test-generated-image {
+  max-width: 256px;
+  max-height: 256px;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  cursor: pointer;
+  object-fit: contain;
+  transition: transform 0.2s;
+}
+
+.test-generated-image:hover {
+  transform: scale(1.02);
+}
+
+/* 测试图片预览弹窗 */
+.test-image-preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  cursor: zoom-out;
+}
+
+.test-image-preview-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  cursor: default;
+}
+
+.test-image-preview-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.test-image-preview-close:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* 错误详情区域 */

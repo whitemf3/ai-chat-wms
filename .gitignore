@@ -30,3 +30,5 @@ Thumbs.db
 # IDE（可选，按团队习惯）
 .vscode/
 .idea/
+.output/
+dist/
