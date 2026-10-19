@@ -524,6 +524,8 @@ const IMAGE_MODELS = [
   '@cf/stabilityai/stable-diffusion-3.5-large-turbo',
   '@cf/lykon/dreamshaper-8-lcm',
   '@cf/google/dreamboat-xl',
+  '@cf/leonardo/lucid-origin',
+  '@cf/leonardo/phoenix-1.0',
 ];
 const isImageModel = (modelId) => IMAGE_MODELS.includes(modelId);
 // 当前表单是否为文生图模型（用于价格字段文案与单位切换）
