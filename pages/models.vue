@@ -1,25 +1,7 @@
 <template>
   <div>
-    <!-- Tab 切换 -->
-    <div class="tab-container">
-      <div class="tabs">
-        <button
-          :class="['tab', { active: activeTab === 'models' }]"
-          @click="activeTab = 'models'"
-        >
-          模型列表
-        </button>
-        <button
-          :class="['tab', { active: activeTab === 'rules' }]"
-          @click="activeTab = 'rules'"
-        >
-          选择规则
-        </button>
-      </div>
-    </div>
-
-    <!-- 模型列表 Tab -->
-    <div v-show="activeTab === 'models'" class="card">
+    <!-- 模型列表 -->
+    <div class="card">
       <div class="card-header">
         <div class="card-title-row">
           <h3 class="card-title">模型配置</h3>
@@ -49,6 +31,7 @@
       <!-- 表格头 -->
       <div class="model-table-header">
         <div class="col-name">模型</div>
+        <div class="col-type">类型</div>
         <div class="col-desc">描述</div>
         <div class="col-status">状态</div>
         <div class="col-param">Context</div>
@@ -68,6 +51,11 @@
               <span class="model-name-text">{{ model.name }}</span>
             </div>
             <div class="model-id">{{ model.model_id }}</div>
+          </div>
+          <div class="col-type">
+            <span :class="['type-badge', model.capabilities || 'chat']">
+              {{ capabilityLabel(model.capabilities) }}
+            </span>
           </div>
           <div class="col-desc">{{ model.description || '-' }}</div>
           <div class="col-status">
@@ -96,106 +84,6 @@
       </div>
     </div>
 
-    <!-- 选择规则 Tab -->
-    <div v-show="activeTab === 'rules'" class="card">
-      <div class="card-header">
-        <h3 class="card-title">模型选择规则</h3>
-        <button v-if="isSuperAdmin" class="btn btn-primary btn-sm" @click="showAddRuleModal = true">+ 添加规则</button>
-      </div>
-
-      <!-- 规则说明 -->
-      <div class="rule-notice">
-        <span class="notice-icon">📌</span>
-        <span>规则优先级：从上到下依次匹配，匹配成功即停止。可拖拽调整顺序。</span>
-      </div>
-
-      <!-- 规则列表 -->
-      <div class="rule-list">
-        <div
-          v-for="(rule, index) in rules"
-          :key="rule.id"
-          class="rule-row"
-          draggable="true"
-          @dragstart="onDragStart($event, index)"
-          @dragover.prevent
-          @drop="onDrop($event, index)"
-        >
-          <div class="rule-drag">
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
-              <path d="M96,192a12,12,0,1,1-12-12A12,12,0,0,1,96,192Zm84-12a12,12,0,1,0,12,12A12,12,0,0,0,180,180Zm-96-84a12,12,0,1,0,12,12A12,12,0,0,0,84,96Zm96,0a12,12,0,1,0,12,12A12,12,0,0,0,180,96Z"></path>
-            </svg>
-          </div>
-
-          <div class="rule-content">
-            <div class="rule-header">
-              <span class="rule-icon">{{ getRuleIcon(rule.condition_type) }}</span>
-              <span class="rule-name">{{ rule.name }}</span>
-              <span v-if="!rule.enabled" class="status-badge">已禁用</span>
-              <span v-else class="status-badge active">启用</span>
-            </div>
-            <div class="rule-detail">
-              <span class="rule-condition">{{ getConditionText(rule) }}</span>
-              <span class="rule-arrow">→</span>
-              <span class="rule-target">{{ rule.target_model_name || rule.target_model_id }}</span>
-            </div>
-          </div>
-
-          <div class="rule-actions">
-            <template v-if="isSuperAdmin">
-              <button
-                :class="['btn', 'btn-sm', rule.enabled ? 'btn-ghost' : 'btn-primary']"
-                @click="toggleRule(rule)"
-              >
-                {{ rule.enabled ? '禁用' : '启用' }}
-              </button>
-              <button class="btn btn-ghost btn-sm" @click="editRule(rule)">编辑</button>
-              <button class="btn btn-danger btn-sm" @click="deleteRule(rule)">删除</button>
-            </template>
-            <span v-else class="no-permission">仅查看</span>
-          </div>
-        </div>
-
-        <div v-if="rules.length === 0" class="empty-state">
-          <p>暂无规则，点击"添加规则"创建</p>
-        </div>
-      </div>
-
-      <!-- 测试面板（仅超级管理员可见） -->
-      <div v-if="isSuperAdmin" class="test-panel">
-        <div class="test-panel-header">
-          <span class="test-icon">🧪</span>
-          <span>测试规则匹配</span>
-        </div>
-        <div class="test-panel-body">
-          <div class="test-input-row">
-            <input
-              v-model="testMessage"
-              type="text"
-              class="form-input test-input"
-              placeholder="输入测试消息，如：帮我翻译这段文字"
-            />
-            <label class="test-checkbox">
-              <input type="checkbox" v-model="testHasImage" />
-              <span>有图片</span>
-            </label>
-            <label class="test-checkbox">
-              <input type="checkbox" v-model="testDeepThink" />
-              <span>深度思考</span>
-            </label>
-            <button class="btn btn-primary btn-sm" @click="testRules" :disabled="!testMessage">
-              测试
-            </button>
-          </div>
-          <div v-if="testResult" class="test-result">
-            <span class="result-label">匹配结果：</span>
-            <span v-if="testResult.matched_rule" class="result-rule">
-              {{ testResult.matched_rule.name }} →
-            </span>
-            <span class="result-model">{{ testResult.selected_model_name }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- 添加/编辑模型弹窗 -->
     <div v-if="showAddModal || showEditModal" class="modal-overlay" @mousedown="onOverlayMouseDown" @click="onOverlayClick">
@@ -215,6 +103,16 @@
         <div class="form-group">
           <label class="form-label">描述</label>
           <input v-model="modelForm.description" type="text" class="form-input" placeholder="模型描述" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">模型类型 *</label>
+          <select v-model="modelForm.capabilities" class="form-input">
+            <option value="chat">对话模型（文本生成）</option>
+            <option value="vision">视觉模型（图片理解）</option>
+            <option value="image">文生图模型（图片生成）</option>
+          </select>
+          <div class="form-hint">供「智能路由」按意图筛选可用模型</div>
         </div>
 
         <div class="form-row">
@@ -323,114 +221,6 @@
         </div>
       </div>
     </div>
-
-    <!-- 添加/编辑规则弹窗 -->
-    <div v-if="showAddRuleModal || showEditRuleModal" class="modal-overlay" @mousedown="onOverlayMouseDown" @click="onRuleOverlayClick">
-      <div class="modal-content modal-large" @click.stop>
-        <h3 class="modal-title">{{ showEditRuleModal ? '编辑规则' : '添加规则' }}</h3>
-
-        <div class="form-group">
-          <label class="form-label">规则名称 *</label>
-          <input v-model="ruleForm.name" type="text" class="form-input" placeholder="例如：图片理解" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">规则描述</label>
-          <input v-model="ruleForm.description" type="text" class="form-input" placeholder="规则描述" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">条件类型 *</label>
-          <select v-model="ruleForm.condition_type" class="filter-select">
-            <option value="has_image">有图片附件</option>
-            <option value="deep_think">深度思考模式</option>
-            <option value="translate">翻译任务</option>
-            <option value="length_range">文本长度范围</option>
-            <option value="custom">自定义条件</option>
-          </select>
-        </div>
-
-        <!-- 条件参数：翻译任务 -->
-        <div v-if="ruleForm.condition_type === 'translate'" class="form-group">
-          <label class="form-label">关键词列表</label>
-          <input
-            v-model="translateKeywords"
-            type="text"
-            class="form-input"
-            placeholder="输入关键词，逗号分隔，如：翻译,translate,转成"
-          />
-          <div class="form-hint">用户消息包含这些关键词时触发</div>
-        </div>
-
-        <!-- 条件参数：文本长度 -->
-        <div v-if="ruleForm.condition_type === 'length_range'" class="form-group">
-          <label class="form-label">长度范围（字符数）</label>
-          <div class="range-inputs">
-            <input v-model.number="lengthMin" type="number" class="form-input" placeholder="最小" />
-            <span class="range-separator">-</span>
-            <input v-model.number="lengthMax" type="number" class="form-input" placeholder="最大" />
-          </div>
-        </div>
-
-        <!-- 条件参数：自定义 -->
-        <div v-if="ruleForm.condition_type === 'custom'" class="form-group">
-          <label class="form-label">自定义表达式</label>
-          <input
-            v-model="customExpression"
-            type="text"
-            class="form-input"
-            placeholder="如：message.includes('代码')"
-          />
-          <div class="form-hint">支持简单表达式，message 为用户消息</div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">目标模型 *</label>
-          <select v-model="ruleForm.target_model_id" class="filter-select">
-            <option value="">请选择模型</option>
-            <option v-for="model in enabledModels" :key="model.model_id" :value="model.model_id">
-              {{ model.name }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">优先级</label>
-          <input v-model.number="ruleForm.priority" type="number" class="form-input" />
-          <div class="form-hint">数值越大优先级越高</div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn btn-secondary" @click="closeRuleModal">取消</button>
-          <button class="btn btn-primary" @click="saveRule">保存</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 确认弹窗 -->
-    <ConfirmDialog
-      v-model:visible="dialog.confirmVisible.value"
-      :type="dialog.confirmType.value"
-      :message="dialog.confirmMessage.value"
-      :bindings="dialog.confirmBindings.value"
-      @confirm="dialog.handleConfirm"
-      @cancel="dialog.handleCancel"
-    />
-
-    <!-- 顶部通知 -->
-    <TopAlert
-      v-model:visible="dialog.alertVisible.value"
-      :type="dialog.alertType.value"
-      :message="dialog.alertMessage.value"
-      :duration="dialog.alertDuration.value"
-      :alert-key="dialog.alertKey.value"
-    />
-
-    <!-- 文生图测试图片预览弹窗 -->
-    <div v-if="testImagePreview" class="test-image-preview-overlay" @click="closeTestImagePreview">
-      <img :src="testImagePreview" class="test-image-preview-content" @click.stop alt="测试生成的图片" />
-      <button class="test-image-preview-close" @click="closeTestImagePreview" title="关闭">×</button>
-    </div>
   </div>
 </template>
 
@@ -473,7 +263,6 @@ const onRuleOverlayClick = (e) => {
 };
 
 // Tab 状态
-const activeTab = ref('models');
 
 // 模型列表相关
 const models = ref([]);
@@ -482,17 +271,6 @@ const showAddModal = ref(false);
 const showEditModal = ref(false);
 const showParamsHelp = ref(false);
 
-// 规则列表相关
-const rules = ref([]);
-const showAddRuleModal = ref(false);
-const showEditRuleModal = ref(false);
-const draggedIndex = ref(null);
-
-// 测试相关
-const testMessage = ref('');
-const testHasImage = ref(false);
-const testDeepThink = ref(false);
-const testResult = ref(null);
 
 // 模型表单
 const defaultModelForm = {
@@ -505,7 +283,8 @@ const defaultModelForm = {
   temperature: 0.7,
   display_order: 0,
   input_price: 0,
-  output_price: 0
+  output_price: 0,
+  capabilities: 'chat'
 };
 const modelForm = ref({ ...defaultModelForm });
 
@@ -528,6 +307,13 @@ const IMAGE_MODELS = [
   '@cf/leonardo/phoenix-1.0',
 ];
 const isImageModel = (modelId) => IMAGE_MODELS.includes(modelId);
+
+const CAPABILITY_LABELS = {
+  chat: '对话模型',
+  vision: '视觉模型',
+  image: '文生图模型'
+};
+const capabilityLabel = (cap) => CAPABILITY_LABELS[cap || 'chat'] || cap || '对话模型';
 // 当前表单是否为文生图模型（用于价格字段文案与单位切换）
 const isImageModelForm = computed(() => isImageModel(modelForm.value.model_id));
 
@@ -535,25 +321,6 @@ const isImageModelForm = computed(() => isImageModel(modelForm.value.model_id));
 const testingModel = ref(false);
 const modelTestResult = ref(null);
 const showErrorDetail = ref(false);
-
-// 规则表单
-const defaultRuleForm = {
-  id: '',
-  name: '',
-  description: '',
-  condition_type: 'length_range',
-  condition_value: {},
-  target_model_id: '',
-  priority: 0,
-  enabled: 1
-};
-const ruleForm = ref({ ...defaultRuleForm });
-
-// 条件参数临时变量
-const translateKeywords = ref('');
-const lengthMin = ref(0);
-const lengthMax = ref(200);
-const customExpression = ref('');
 
 // ============================================
 // 模型相关方法
@@ -800,305 +567,14 @@ const deleteModel = async (model) => {
   }
 };
 
-// ============================================
-// 规则相关方法
-// ============================================
-const loadRules = async () => {
-  try {
-    const response = await fetchAPI('/api/admin/model-rules');
-    const data = await response.json();
-    if (data.success) {
-      rules.value = data.data;
-    }
-  } catch (error) {
-    console.error('获取规则列表失败:', error);
-  }
-};
-
-const getRuleIcon = (type) => {
-  const icons = {
-    has_image: '🖼️',
-    deep_think: '🧠',
-    translate: '🌐',
-    length_range: '📝',
-    custom: '⚙️'
-  };
-  return icons[type] || '📌';
-};
-
-const getConditionText = (rule) => {
-  // 解析 condition_value（可能是字符串或对象）
-  let value = rule.condition_value;
-  if (typeof value === 'string') {
-    try {
-      value = JSON.parse(value);
-    } catch (e) {
-      value = {};
-    }
-  }
-
-  switch (rule.condition_type) {
-    case 'has_image':
-      return '用户上传了图片';
-    case 'deep_think':
-      return '开启了深度思考模式';
-    case 'translate':
-      return `消息包含关键词 [${(value.keywords || []).join(', ')}]`;
-    case 'length_range':
-      return `消息长度 ${value.min}-${value.max} 字符`;
-    case 'custom':
-      return `自定义: ${value.expression}`;
-    default:
-      return '未知条件';
-  }
-};
-
-const editRule = (rule) => {
-  ruleForm.value = { ...rule };
-
-  // 解析 condition_value（可能是字符串或对象）
-  let value = rule.condition_value;
-  if (typeof value === 'string') {
-    try {
-      value = JSON.parse(value);
-    } catch (e) {
-      value = {};
-    }
-  }
-
-  // 解析条件值到临时变量
-  if (rule.condition_type === 'translate') {
-    translateKeywords.value = (value.keywords || []).join(', ');
-  } else if (rule.condition_type === 'length_range') {
-    lengthMin.value = value.min || 0;
-    lengthMax.value = value.max || 200;
-  } else if (rule.condition_type === 'custom') {
-    customExpression.value = value.expression || '';
-  }
-
-  showEditRuleModal.value = true;
-};
-
-const closeRuleModal = () => {
-  showAddRuleModal.value = false;
-  showEditRuleModal.value = false;
-  ruleForm.value = { ...defaultRuleForm };
-  translateKeywords.value = '';
-  lengthMin.value = 0;
-  lengthMax.value = 200;
-  customExpression.value = '';
-};
-
-const buildConditionValue = () => {
-  switch (ruleForm.value.condition_type) {
-    case 'has_image':
-      return { value: true };
-    case 'deep_think':
-      return { value: true };
-    case 'translate':
-      return { keywords: translateKeywords.value.split(',').map(k => k.trim()).filter(Boolean) };
-    case 'length_range':
-      return { min: lengthMin.value, max: lengthMax.value };
-    case 'custom':
-      return { expression: customExpression.value };
-    default:
-      return {};
-  }
-};
-
-const saveRule = async () => {
-  try {
-    const conditionValue = buildConditionValue();
-
-    const payload = {
-      ...ruleForm.value,
-      condition_value: conditionValue
-    };
-
-    const url = showEditRuleModal.value
-      ? `/api/admin/model-rules/${ruleForm.value.id}`
-      : '/api/admin/model-rules';
-
-    const method = showEditRuleModal.value ? 'PUT' : 'POST';
-
-    const response = await fetchAPI(url, {
-      method,
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
-    if (data.success) {
-      closeRuleModal();
-      loadRules();
-      dialog.showSuccess('规则已保存');
-    } else {
-      dialog.showError(data.error?.message || '保存失败');
-    }
-  } catch (error) {
-    console.error('保存规则失败:', error);
-    dialog.showError('保存规则失败');
-  }
-};
-
-const toggleRule = async (rule) => {
-  try {
-    const response = await fetchAPI(`/api/admin/model-rules/${rule.id}/toggle`, {
-      method: 'PUT'
-    });
-
-    const data = await response.json();
-    if (data.success) {
-      loadRules();
-      dialog.showSuccess(rule.enabled ? '规则已禁用' : '规则已启用');
-    } else {
-      dialog.showError(data.error?.message || '操作失败');
-    }
-  } catch (error) {
-    console.error('切换规则状态失败:', error);
-    dialog.showError('操作失败');
-  }
-};
-
-const deleteRule = async (rule) => {
-  const confirmed = await dialog.showConfirm(`确定要删除规则 "${rule.name}" 吗？`);
-
-  if (!confirmed) return;
-
-  try {
-    const response = await fetchAPI(`/api/admin/model-rules/${rule.id}`, {
-      method: 'DELETE'
-    });
-
-    const data = await response.json();
-    if (data.success) {
-      loadRules();
-      dialog.showSuccess('规则已删除');
-    } else {
-      dialog.showError(data.error?.message || '删除失败');
-    }
-  } catch (error) {
-    console.error('删除规则失败:', error);
-    dialog.showError('删除规则失败');
-  }
-};
-
-// 拖拽排序
-const onDragStart = (event, index) => {
-  draggedIndex.value = index;
-  event.dataTransfer.effectAllowed = 'move';
-};
-
-const onDrop = async (event, targetIndex) => {
-  if (draggedIndex.value === null || draggedIndex.value === targetIndex) {
-    return;
-  }
-
-  const newRules = [...rules.value];
-  const [removed] = newRules.splice(draggedIndex.value, 1);
-  newRules.splice(targetIndex, 0, removed);
-
-  // 重新计算优先级
-  const orders = newRules.map((rule, index) => ({
-    id: rule.id,
-    priority: newRules.length - index
-  }));
-
-  rules.value = newRules;
-
-  try {
-    await fetchAPI('/api/admin/model-rules/reorder', {
-      method: 'PUT',
-      body: JSON.stringify({ orders })
-    });
-  } catch (error) {
-    console.error('更新优先级失败:', error);
-    loadRules(); // 回滚
-  }
-
-  draggedIndex.value = null;
-};
-
-// 测试规则
-const testRules = async () => {
-  try {
-    const response = await fetchAPI('/api/admin/model-rules/test', {
-      method: 'POST',
-      body: JSON.stringify({
-        message: testMessage.value,
-        has_image: testHasImage.value,
-        deep_think: testDeepThink.value
-      })
-    });
-
-    const data = await response.json();
-    if (data.success) {
-      testResult.value = data.data;
-    } else {
-      dialog.showError(data.error?.message || '测试失败');
-    }
-  } catch (error) {
-    console.error('测试规则失败:', error);
-    dialog.showError('测试规则失败');
-  }
-};
-
 // 初始化
 onMounted(() => {
   loadModels();
-  loadRules();
   loadPresetPricings();
 });
 </script>
 
 <style scoped>
-/* Tab 切换 */
-.tab-container {
-  margin-bottom: 16px;
-}
-
-.tabs {
-  display: flex;
-  gap: 8px;
-  background: #f5f5f7;
-  padding: 4px;
-  border-radius: 10px;
-}
-
-.dark .tabs {
-  background: #2c2c2e;
-}
-
-.tab {
-  padding: 10px 20px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #86868b;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tab:hover {
-  color: #1d1d1f;
-}
-
-.dark .tab:hover {
-  color: #e5e5e7;
-}
-
-.tab.active {
-  background: #fff;
-  color: #1d1d1f;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.dark .tab.active {
-  background: #3a3a3c;
-  color: #fff;
-}
-
 /* 卡片头部 */
 .card-header {
   display: flex;

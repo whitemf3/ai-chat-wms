@@ -22,9 +22,9 @@
           <span class="nav-icon">🤖</span>
           <span class="nav-text">模型配置</span>
         </NuxtLink>
-        <NuxtLink to="/workflows" class="nav-item" :class="{ active: $route.path === '/workflows' }">
-          <span class="nav-icon">🔄</span>
-          <span class="nav-text">AI工作流</span>
+        <NuxtLink to="/router" class="nav-item" :class="{ active: $route.path === '/router' }">
+          <span class="nav-icon">🧭</span>
+          <span class="nav-text">智能路由</span>
         </NuxtLink>
         <NuxtLink to="/shares" class="nav-item" :class="{ active: $route.path === '/shares' }">
           <span class="nav-icon">🔗</span>
@@ -90,7 +90,7 @@ const pageTitle = computed(() => {
     '/users': '用户管理',
     '/quota': '额度管理',
     '/models': '模型配置',
-    '/workflows': 'AI工作流',
+    '/router': '智能路由',
     '/shares': '分享链接',
     '/settings': '系统设置'
   };

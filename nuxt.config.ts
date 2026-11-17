@@ -45,7 +45,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8787',
+      // 本地默认对接 wrangler dev（端口与 worker/wrangler.toml [dev].port 一致）；
+      // 生产由 NUXT_PUBLIC_API_BASE 环境变量注入（Cloudflare Pages 构建配置）
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8790',
     },
   },
 

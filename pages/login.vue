@@ -63,6 +63,7 @@ useHead({
 });
 
 const { login } = useAdminAuth();
+const config = useRuntimeConfig();
 
 const email = ref('');
 const password = ref('');
@@ -75,9 +76,13 @@ const handleLogin = async () => {
     return;
   }
 
-  // Get Turnstile token
+  // Get Turnstile token（本地 dev 对接 wrangler dev 时豁免，与后端一致）
+  const isDev =
+    !config.public.apiBase ||
+    config.public.apiBase.includes('localhost') ||
+    config.public.apiBase.includes('127.0.0.1');
   const turnstileToken = document.querySelector('input[name="cf-turnstile-response"]')?.value;
-  if (!turnstileToken) {
+  if (!isDev && !turnstileToken) {
     error.value = '请完成人机验证';
     return;
   }

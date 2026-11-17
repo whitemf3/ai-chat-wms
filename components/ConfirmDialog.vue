@@ -37,20 +37,6 @@
                 </div>
               </div>
             </div>
-
-            <div v-if="bindings.workflows && bindings.workflows.length > 0" class="binding-group">
-              <div class="binding-group-header">
-                <span class="binding-group-icon">🔄</span>
-                <span class="binding-group-title">AI工作流</span>
-                <span class="binding-count">{{ bindings.workflows.length }}</span>
-              </div>
-              <div class="binding-list">
-                <div v-for="workflow in bindings.workflows" :key="workflow.id" class="binding-item">
-                  <span class="binding-dot"></span>
-                  <span class="binding-name">{{ workflow.name }}</span>
-                </div>
-              </div>
-            </div>
           </div>
 
           <!-- Buttons -->
