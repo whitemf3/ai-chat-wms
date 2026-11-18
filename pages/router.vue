@@ -1,5 +1,5 @@
 <template>
-  <div class="router-page">
+  <div class="router-page" :class="{ 'is-readonly': !isSuperAdmin }">
     <!-- 页头 -->
     <header class="page-head">
       <div>
@@ -15,6 +15,12 @@
       </div>
     </header>
 
+    <!-- 只读提示（普通用户 / 普通管理员） -->
+    <div v-if="!isSuperAdmin" class="readonly-notice">
+      <span class="readonly-dot"></span>
+      当前为只读模式：仅超级管理员可修改智能路由配置。
+    </div>
+
     <!-- 总开关卡片 -->
     <section class="panel switch-panel">
       <div class="panel-main">
@@ -23,7 +29,7 @@
           <div class="panel-hint">关闭后所有请求直接使用下方「降级模型」</div>
         </div>
         <label class="switch">
-          <input type="checkbox" v-model="config.enabled" />
+          <input type="checkbox" v-model="config.enabled" :disabled="!isSuperAdmin" />
           <span class="slider"></span>
         </label>
       </div>
@@ -41,7 +47,7 @@
       <div class="panel-body grid-3">
         <div class="field">
           <label class="field-label">视觉模型<small>消息带图片附件时使用</small></label>
-          <select v-model="config.vision_model" class="field-select">
+          <select v-model="config.vision_model" class="field-select" :disabled="!isSuperAdmin">
             <optgroup v-if="modelsByCapabilities('vision').length" label="视觉模型">
               <option v-for="m in modelsByCapabilities('vision')" :key="m.model_id" :value="m.model_id">
                 {{ m.name }}
@@ -59,7 +65,7 @@
         </div>
         <div class="field">
           <label class="field-label">深度思考模型<small>前端"深度思考"开关开启时使用</small></label>
-          <select v-model="config.deep_think_model" class="field-select">
+          <select v-model="config.deep_think_model" class="field-select" :disabled="!isSuperAdmin">
             <optgroup label="对话模型">
               <option v-for="m in modelsByCapabilities('chat')" :key="m.model_id" :value="m.model_id">
                 {{ m.name }}
@@ -72,7 +78,7 @@
         </div>
         <div class="field">
           <label class="field-label">文生图模型<small>生图意图命中时使用</small></label>
-          <select v-model="config.image_model" class="field-select">
+          <select v-model="config.image_model" class="field-select" :disabled="!isSuperAdmin">
             <optgroup label="文生图模型">
               <option v-for="m in modelsByCapabilities('image')" :key="m.model_id" :value="m.model_id">
                 {{ m.name }}
@@ -101,7 +107,7 @@
       <div class="panel-body">
         <div class="field" style="max-width: 420px">
           <label class="field-label">兜底模型<small>建议选择响应快的中等参数模型</small></label>
-          <select v-model="config.fallback_model" class="field-select">
+          <select v-model="config.fallback_model" class="field-select" :disabled="!isSuperAdmin">
             <optgroup label="对话模型">
               <option v-for="m in modelsByCapabilities('chat')" :key="m.model_id" :value="m.model_id">
                 {{ m.name }}
@@ -130,11 +136,12 @@
           v-model="keywordsText"
           class="field-textarea keywords-area"
           rows="7"
+          :disabled="!isSuperAdmin"
           placeholder="每行一个关键词，例如：&#10;画一张&#10;帮我画&#10;generate an image"
         ></textarea>
         <div class="field-foot">
-          <span>按行编辑，保存时自动去除空行</span>
-          <button class="btn ghost sm" type="button" @click="restoreDefaultKeywords">恢复默认关键词</button>
+          <span>{{ isSuperAdmin ? '按行编辑，保存时自动去除空行' : '仅超级管理员可编辑' }}</span>
+          <button v-if="isSuperAdmin" class="btn ghost sm" type="button" @click="restoreDefaultKeywords">恢复默认关键词</button>
         </div>
       </div>
     </section>
@@ -148,7 +155,7 @@
           <div class="panel-hint">关键词未命中时，用低成本小模型判断用户是否想要生成图片</div>
         </div>
         <label class="switch">
-          <input type="checkbox" v-model="config.classify_enabled" />
+          <input type="checkbox" v-model="config.classify_enabled" :disabled="!isSuperAdmin" />
           <span class="slider"></span>
         </label>
       </div>
@@ -156,7 +163,7 @@
         <div class="grid-3">
           <div class="field">
             <label class="field-label">分类模型<small>建议使用小参数模型</small></label>
-            <select v-model="config.classify_model" class="field-select" :disabled="!config.classify_enabled">
+            <select v-model="config.classify_model" class="field-select" :disabled="!isSuperAdmin || !config.classify_enabled">
               <optgroup label="对话模型">
                 <option v-for="m in modelsByCapabilities('chat')" :key="m.model_id" :value="m.model_id">
                   {{ m.name }}
@@ -176,7 +183,7 @@
               min="500"
               max="30000"
               step="500"
-              :disabled="!config.classify_enabled"
+              :disabled="!isSuperAdmin || !config.classify_enabled"
             />
           </div>
           <div class="field">
@@ -189,7 +196,7 @@
                 min="0"
                 max="1"
                 step="0.05"
-                :disabled="!config.classify_enabled"
+                :disabled="!isSuperAdmin || !config.classify_enabled"
               />
               <span class="range-value">{{ Number(config.confidence_threshold).toFixed(2) }}</span>
             </div>
@@ -203,7 +210,7 @@
             v-model="config.llm_prompt"
             class="field-textarea prompt-area"
             rows="10"
-            :disabled="!config.classify_enabled"
+            :disabled="!isSuperAdmin || !config.classify_enabled"
           ></textarea>
         </div>
       </div>
@@ -252,8 +259,8 @@
       </div>
     </section>
 
-    <!-- 粘性操作栏 -->
-    <div class="action-bar">
+    <!-- 粘性操作栏（仅超级管理员可保存 / 重置） -->
+    <div v-if="isSuperAdmin" class="action-bar">
       <span v-if="saveMsg" :class="['save-msg', saveOk ? 'ok' : 'fail']">
         <span class="save-dot"></span>{{ saveMsg }}
       </span>
@@ -272,7 +279,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useAdminAuth } from '~/composables/useAdminAuth';
 
-const { fetchAPI } = useAdminAuth();
+const { fetchAPI, isSuperAdmin } = useAdminAuth();
 
 const loading = ref(true);
 const saving = ref(false);
@@ -420,6 +427,32 @@ onMounted(async () => {
   --text-3: #9b9b9e;
   --bg-soft: rgba(5, 5, 5, 0.03);
   padding-bottom: 120px;
+}
+
+.router-page.is-readonly {
+  padding-bottom: 24px;
+}
+
+/* 只读提示 */
+.readonly-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.08);
+  font-size: 13px;
+  color: #b45309;
+}
+
+.readonly-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 /* 页头 */
@@ -750,6 +783,11 @@ onMounted(async () => {
 
 .switch input:checked + .slider::before {
   transform: translateX(20px);
+}
+
+.switch input:disabled + .slider {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* 测试 */
